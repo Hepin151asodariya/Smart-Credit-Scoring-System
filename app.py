@@ -38,7 +38,7 @@ bulk_required_cols = [
 
 
 st.title('Smart Credit Scoring System')
-tab_predictor, tab_bulk, tab_guide = st.tabs(['Predictor', 'Bulk Prediction', 'Model & Parameter Atlas'])
+tab_predictor, tab_bulk, tab_guide = st.tabs(['🔍 Predictor', '📂 Bulk Prediction', '📊 Model & parameter Atlas'])
 
 
 # Predictor Tab
@@ -295,8 +295,8 @@ with tab_bulk:
         with summary_section:
             st.write("### Summary")
             st.metric("Total Rows", len(df))
-            st.metric("GOOD", (df['Prediction'] == 'GOOD').sum())
-            st.metric("BAD", (df['Prediction'] == 'BAD').sum())
+            st.metric("✅ GOOD", (df['Prediction'] == 'GOOD').sum())
+            st.metric("❌ BAD", (df['Prediction'] == 'BAD').sum())
 
         with chart_section:
             st.write("### Prediction Distribution")
@@ -319,46 +319,6 @@ with tab_bulk:
 
 # Parameter Atlas Tab
 with tab_guide:
-    # XGBoost Model Metrics Section
-    st.subheader('XGBoost Model Metrics')
-    
-
-    # Display metrics as cards
-    metric_col1, metric_col2, metric_col3, metric_col4, metric_col5 = st.columns(5)
-
-    with metric_col1:
-        st.metric("Accuracy", f"{xgboost_metrics['Accuracy'] * 100:.2f}%")
-    with metric_col2:
-        st.metric("Precision", f"{xgboost_metrics['Precision'] * 100:.2f}%")
-    with metric_col3:
-        st.metric("Recall", f"{xgboost_metrics['Recall'] * 100:.2f}%")
-    with metric_col4:
-        st.metric("F1-Score", f"{xgboost_metrics['F1-Score'] * 100:.2f}%")
-    with metric_col5:
-        st.metric("ROC-AUC", f"{xgboost_metrics['ROC-AUC'] * 100:.2f}%")
-
-    st.divider()
-
-    # Bar Chart
-    st.write("### Metrics Bar Chart")
-    fig_bar, ax_bar = plt.subplots(figsize=(10, 5))
-    metrics_names = list(xgboost_metrics.keys())
-    metrics_values = list(xgboost_metrics.values())
-
-    bars = ax_bar.bar(metrics_names, metrics_values, color=['#2e7d32', '#1976d2', '#f57c00', '#c62828', '#7b1fa2'], alpha=0.8)
-    ax_bar.set_ylabel('Score', fontsize=11)
-    ax_bar.set_ylim(0, 1.0)
-    ax_bar.grid(axis='y', alpha=0.3)
-
-    for bar in bars:
-        height = bar.get_height()
-        ax_bar.text(bar.get_x() + bar.get_width()/2., height,
-                    f'{height:.4f}', ha='center', va='bottom', fontweight='bold')
-
-    plt.tight_layout()
-    st.pyplot(fig_bar)
-
-    st.divider()
     st.subheader('Parameter Meaning Guide')
     st.write('Open each item to see type and meaning.')
 
@@ -411,3 +371,31 @@ with tab_guide:
         with st.expander('Duration'):
             st.markdown('- Type: Integer (months)')
             st.markdown('- Meaning: Loan repayment period in months.')
+
+    st.divider()
+
+    # XGBoost Model Metrics Section
+    st.subheader('XGBoost Model Metrics')
+
+    st.divider()
+
+    # Bar Chart
+    st.write("### Metrics Bar Chart")
+    fig_bar, ax_bar = plt.subplots(figsize=(10, 5))
+    metrics_names = list(xgboost_metrics.keys())
+    metrics_values = list(xgboost_metrics.values())
+
+    bars = ax_bar.bar(metrics_names, metrics_values, color="#5f7fa3", alpha=0.85)
+    ax_bar.set_ylabel('Score', fontsize=11, fontweight='bold')
+    ax_bar.set_ylim(0, 1.0)
+    ax_bar.grid(axis='y', alpha=0.2)
+    for label in ax_bar.get_xticklabels():
+        label.set_fontweight('bold')
+
+    for bar in bars:
+        height = bar.get_height()
+        ax_bar.text(bar.get_x() + bar.get_width()/2., height,
+                    f'{height:.4f}', ha='center', va='bottom', color='#333333', fontsize=10, fontweight='heavy')
+
+    plt.tight_layout()
+    st.pyplot(fig_bar)
