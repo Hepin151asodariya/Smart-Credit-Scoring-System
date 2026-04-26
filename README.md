@@ -1,5 +1,7 @@
 # Smart Credit Scoring System
 
+Live App: https://smart-credit-scoring-system.streamlit.app/
+
 ## Overview
 Smart Credit Scoring System is a Streamlit application that predicts loan applicant credit risk using a trained XGBoost model.
 
@@ -152,3 +154,5 @@ Smart Credit Scoring System/
 |   |-- credict_risk_modeling.ipynb
 |-- venv/
 ```
+
+Live App: https://smart-credit-scoring-system.streamlit.app/
