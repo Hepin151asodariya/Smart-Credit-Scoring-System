@@ -293,31 +293,41 @@ with tab_bulk:
 
         st.dataframe(df, use_container_width=True, hide_index=True)
 
-        summary_section, chart_section = st.columns(2)
+        st.divider()
 
-        with summary_section:
-            st.write("### Summary")
-            st.metric("Total Rows", len(df))
-            st.metric("✅ GOOD", (df['Prediction'] == 'GOOD').sum())
-            st.metric("❌ BAD", (df['Prediction'] == 'BAD').sum())
+        summary_col, graph_col = st.columns(2, gap="small")
 
-        with chart_section:
-            st.write("### Prediction Distribution")
-            counts = df["Prediction"].value_counts().reindex(["GOOD", "BAD"], fill_value=0)
-            color_map = {"GOOD": "#2e7d32", "BAD": "#c62828"}
-            colors = [color_map[label] for label in counts.index]
+        with summary_col:
+            with st.container(border=True):
+                st.write("### Summary")
+                total_rows_col, good_col, bad_col = st.columns(3)
+                with total_rows_col:
+                    st.metric("Total Rows", len(df))
+                with good_col:
+                    st.metric("✅ GOOD", (df['Prediction'] == 'GOOD').sum())
+                with bad_col:
+                    st.metric("❌ BAD", (df['Prediction'] == 'BAD').sum())
 
-            fig, ax = plt.subplots()
-            ax.pie(
-                counts.values,
-                labels=counts.index,
-                autopct='%1.1f%%',
-                startangle=90,
-                colors=colors,
-                wedgeprops={"width": 0.45}
-            )
-            ax.axis('equal')
-            st.pyplot(fig)
+        with graph_col:
+            with st.container(border=True):
+                st.write("### Prediction Distribution")
+                counts = df["Prediction"].value_counts().reindex(["GOOD", "BAD"], fill_value=0)
+                color_map = {"GOOD": "#2e7d32", "BAD": "#c62828"}
+                colors = [color_map[label] for label in counts.index]
+
+                fig, ax = plt.subplots(figsize=(4.1, 3.2))
+                ax.pie(
+                    counts.values,
+                    labels=counts.index,
+                    autopct='%1.1f%%',
+                    startangle=90,
+                    colors=colors,
+                    wedgeprops={"width": 0.45}
+                )
+                ax.axis('equal')
+                st.pyplot(fig, use_container_width=False)
+        
+        st.divider()
 
 
 # Parameter Atlas Tab
