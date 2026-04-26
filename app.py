@@ -412,3 +412,4 @@ with tab_guide:
 
     plt.tight_layout()
     st.pyplot(fig_bar)
+    
