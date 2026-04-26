@@ -3,6 +3,8 @@ import pandas as pd
 import joblib
 import matplotlib.pyplot as plt
 
+st.set_page_config(page_title="Smart Credit Scoring System", layout="wide")
+
 
 # Load trained model artifacts with caching
 @st.cache_resource
@@ -181,112 +183,113 @@ with tab_bulk:
 
     if uploaded_file is not None:
         df = pd.read_csv(uploaded_file)
-        # Normalize user-uploaded column names to handle case and formatting differences
-        df.columns = df.columns.str.strip().str.lower().str.replace("_", " ")
+        with st.spinner("Processing bulk prediction file..."):
+            # Normalize user-uploaded column names to handle case and formatting differences
+            df.columns = df.columns.str.strip().str.lower().str.replace("_", " ")
 
-        # Map user column names to model-trained schema
-        column_mapping = {
-            "age": "Age",
-            "sex": "Sex",
-            "job": "Job",
-            "housing": "Housing",
-            "saving accounts": "Saving accounts",
-            "checking account": "Checking account",
-            "credit amount": "Credit amount",
-            "duration": "Duration",
-        }
-        df.rename(columns=column_mapping, inplace=True)
+            # Map user column names to model-trained schema
+            column_mapping = {
+                "age": "Age",
+                "sex": "Sex",
+                "job": "Job",
+                "housing": "Housing",
+                "saving accounts": "Saving accounts",
+                "checking account": "Checking account",
+                "credit amount": "Credit amount",
+                "duration": "Duration",
+            }
+            df.rename(columns=column_mapping, inplace=True)
 
-        # Helps debug user-uploaded CSV issues
-        # st.write("Detected Columns:", df.columns.tolist())
+            # Helps debug user-uploaded CSV issues
+            # st.write("Detected Columns:", df.columns.tolist())
 
-        required_cols = [
-            "Age",
-            "Sex",
-            "Job",
-            "Housing",
-            "Saving accounts",
-            "Checking account",
-            "Credit amount",
-            "Duration",
-        ]
+            required_cols = [
+                "Age",
+                "Sex",
+                "Job",
+                "Housing",
+                "Saving accounts",
+                "Checking account",
+                "Credit amount",
+                "Duration",
+            ]
 
-        # Ensure all required features exist before prediction
-        if not all(col in df.columns for col in required_cols):
-            st.error("CSV columns are incorrect. Please upload correct format.")
-            st.stop()
+            # Ensure all required features exist before prediction
+            if not all(col in df.columns for col in required_cols):
+                st.error("CSV columns are incorrect. Please upload correct format.")
+                st.stop()
 
-        # Accept CSVs that include extra columns (e.g., index/target) and use only required features.
-        extra_cols = [col for col in df.columns if col not in required_cols]
-        if extra_cols:
-            st.info(f"Ignoring extra columns: {', '.join(extra_cols)}")
+            # Accept CSVs that include extra columns (e.g., index/target) and use only required features.
+            extra_cols = [col for col in df.columns if col not in required_cols]
+            if extra_cols:
+                st.info(f"Ignoring extra columns: {', '.join(extra_cols)}")
 
-        df = df[required_cols].copy()
+            df = df[required_cols].copy()
 
-        if len(df) > 5000:
-            st.error("File too large. Max 5000 rows allowed")
-            st.stop()
+            if len(df) > 5000:
+                st.error("File too large. Max 5000 rows allowed")
+                st.stop()
 
-        # Normalize categorical values to match training data
-        for col in ["Sex", "Housing", "Saving accounts", "Checking account"]:
-            df[col] = df[col].astype(str).str.strip().str.lower()
+            # Normalize categorical values to match training data
+            for col in ["Sex", "Housing", "Saving accounts", "Checking account"]:
+                df[col] = df[col].astype(str).str.strip().str.lower()
 
-        # Handle missing financial information
-        df["Saving accounts"].fillna("unknown", inplace=True)
-        df["Checking account"].fillna("unknown", inplace=True)
+            # Handle missing financial information
+            df["Saving accounts"].fillna("unknown", inplace=True)
+            df["Checking account"].fillna("unknown", inplace=True)
 
-        valid_values = {
-            "Sex": ["male", "female"],
-            "Housing": ["own", "rent", "free"],
-            "Saving accounts": ["unknown", "little", "moderate", "rich", "quite rich"],
-            "Checking account": ["unknown", "little", "moderate", "rich"],
-        }
+            valid_values = {
+                "Sex": ["male", "female"],
+                "Housing": ["own", "rent", "free"],
+                "Saving accounts": ["unknown", "little", "moderate", "rich", "quite rich"],
+                "Checking account": ["unknown", "little", "moderate", "rich"],
+            }
 
-        # Replace unexpected values to prevent model errors
-        for col in valid_values:
-            df[col] = df[col].apply(lambda x: x if x in valid_values[col] else "unknown")
+            # Replace unexpected values to prevent model errors
+            for col in valid_values:
+                df[col] = df[col].apply(lambda x: x if x in valid_values[col] else "unknown")
 
-        initial_rows = len(df)
+            initial_rows = len(df)
 
-        valid_categories = {
-            "Sex": {"male", "female"},
-            "Housing": {"own", "rent", "free"},
-            "Saving accounts": {"unknown", "little", "moderate", "rich", "quite rich"},
-            "Checking account": {"unknown", "little", "moderate", "rich"},
-        }
+            valid_categories = {
+                "Sex": {"male", "female"},
+                "Housing": {"own", "rent", "free"},
+                "Saving accounts": {"unknown", "little", "moderate", "rich", "quite rich"},
+                "Checking account": {"unknown", "little", "moderate", "rich"},
+            }
 
-        df = df[
-            df["Age"].between(18, 80)
-            & df["Job"].between(0, 3)
-            & (df["Credit amount"] >= 0)
-            & (df["Duration"] >= 1)
-        ]
+            df = df[
+                df["Age"].between(18, 80)
+                & df["Job"].between(0, 3)
+                & (df["Credit amount"] >= 0)
+                & (df["Duration"] >= 1)
+            ]
 
-        for col, allowed_values in valid_categories.items():
-            df = df[df[col].isin(allowed_values)]
+            for col, allowed_values in valid_categories.items():
+                df = df[df[col].isin(allowed_values)]
 
-        removed_rows = initial_rows - len(df)
-        if removed_rows > 0:
-            st.warning(f"{removed_rows} invalid rows removed")
+            removed_rows = initial_rows - len(df)
+            if removed_rows > 0:
+                st.warning(f"{removed_rows} invalid rows removed")
 
-        if df.empty:
-            st.error("No valid rows left after validation")
-            st.stop()
+            if df.empty:
+                st.error("No valid rows left after validation")
+                st.stop()
 
-        encoded_array = encoder.transform(df[cat_cols])
-        encoded_cols = encoder.get_feature_names_out(cat_cols)
-        encoded_df = pd.DataFrame(encoded_array, columns=encoded_cols)
+            encoded_array = encoder.transform(df[cat_cols])
+            encoded_cols = encoder.get_feature_names_out(cat_cols)
+            encoded_df = pd.DataFrame(encoded_array, columns=encoded_cols)
 
-        input_df = pd.concat([df[num_cols].reset_index(drop=True), encoded_df], axis=1)
+            input_df = pd.concat([df[num_cols].reset_index(drop=True), encoded_df], axis=1)
 
-        if hasattr(model, 'feature_names_in_'):
-            input_df = input_df.reindex(columns=model.feature_names_in_, fill_value=0)
+            if hasattr(model, 'feature_names_in_'):
+                input_df = input_df.reindex(columns=model.feature_names_in_, fill_value=0)
 
-        preds = model.predict(input_df)
-        probas = model.predict_proba(input_df)
+            preds = model.predict(input_df)
+            probas = model.predict_proba(input_df)
 
-        df = df.reset_index(drop=True)
-        df["Prediction"] = ["GOOD" if p == 1 else "BAD" for p in preds]
+            df = df.reset_index(drop=True)
+            df["Prediction"] = ["GOOD" if p == 1 else "BAD" for p in preds]
 
         st.dataframe(df, use_container_width=True, hide_index=True)
 
