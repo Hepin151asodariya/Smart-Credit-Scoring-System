@@ -183,6 +183,7 @@ with tab_predictor:
         with col2:
             st.metric('BAD probability', f"{proba[0] * 100:.2f}%")
 
+        st.divider()
 
 # Bulk prediction tab phase: validate uploaded CSV and score all valid rows.
 with tab_bulk:
@@ -349,27 +350,22 @@ with tab_bulk:
 
         st.divider()
 
-        summary_col, graph_col = st.columns(2, gap="small")
+        with st.container(border=True):
+            summary_col, chart_col = st.columns([1, 1.25], gap="large")
 
-        with summary_col:
-            with st.container(border=True):
+            with summary_col:
                 st.write("### Summary")
-                total_rows_col, good_col, bad_col = st.columns(3)
-                with total_rows_col:
-                    st.metric("Total Rows", len(df))
-                with good_col:
-                    st.metric("✅ GOOD", (df['Prediction'] == 'GOOD').sum())
-                with bad_col:
-                    st.metric("❌ BAD", (df['Prediction'] == 'BAD').sum())
+                st.metric("Total Rows", len(df))
+                st.metric("✅ GOOD", (df['Prediction'] == 'GOOD').sum())
+                st.metric("❌ BAD", (df['Prediction'] == 'BAD').sum())
 
-        with graph_col:
-            with st.container(border=True):
+            with chart_col:
                 st.write("### Prediction Distribution")
                 counts = df["Prediction"].value_counts().reindex(["GOOD", "BAD"], fill_value=0)
                 color_map = {"GOOD": "#2e7d32", "BAD": "#c62828"}
                 colors = [color_map[label] for label in counts.index]
 
-                fig, ax = plt.subplots(figsize=(4.1, 3.2))
+                fig, ax = plt.subplots(figsize=(5.4, 3.4))
                 ax.pie(
                     counts.values,
                     labels=counts.index,
@@ -380,8 +376,6 @@ with tab_bulk:
                 )
                 ax.axis('equal')
                 st.pyplot(fig, use_container_width=True)
-        
-        st.divider()
 
 
 # Guide tab phase: explain each parameter and display model performance chart.
