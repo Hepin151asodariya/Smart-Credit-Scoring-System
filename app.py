@@ -3,7 +3,56 @@ import pandas as pd
 import joblib
 import matplotlib.pyplot as plt
 
+# App setup phase: configure page layout and base responsive styles.
 st.set_page_config(page_title="Smart Credit Scoring System", layout="wide")
+
+st.markdown(
+    """
+    <style>
+    /* Page spacing */
+    .block-container {
+        padding: 1.2rem 1.5rem;
+    }
+
+    /* Tabs can wrap on small screens */
+    [data-baseweb="tab-list"] {
+        flex-wrap: wrap;
+        gap: 0.4rem;
+    }
+
+    /* Make tab labels easier to read */
+    [data-baseweb="tab"] {
+        white-space: normal;
+        padding: 0.55rem 0.85rem;
+    }
+
+    /* Keep metric cards aligned */
+    .stMetric {
+        min-height: 86px;
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 768px) {
+        .block-container {
+            padding: 0.9rem;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+        }
+
+        h2 {
+            font-size: 1.35rem;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+        }
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 
 # Load trained model artifacts with caching
@@ -15,7 +64,7 @@ def load_model():
 
 model, encoder = load_model()
 
-# XGBoost Model Metrics from GridSearchCV training
+# Model info phase: training metrics used in the visualization tab.
 xgboost_metrics = {
     "Accuracy": 0.735,
     "Precision": 0.8235,
@@ -27,6 +76,7 @@ xgboost_metrics = {
 cat_cols = ["Sex", "Housing", "Saving accounts", "Checking account"]
 num_cols = ["Age", "Job", "Credit amount", "Duration"]
 
+# Shared schema phase: expected columns for bulk input validation.
 bulk_required_cols = [
     "Age",
     "Sex",
@@ -43,7 +93,7 @@ st.title('Smart Credit Scoring System')
 tab_predictor, tab_bulk, tab_guide = st.tabs(['🔍 Predictor', '📂 Bulk Prediction', '📊 Model & parameter Atlas'])
 
 
-# Predictor Tab
+# Predictor tab phase: collect one applicant input and score risk.
 with tab_predictor:
     st.subheader('Credit Risk Scoring App')
     st.caption('Predict whether an applicant is High Risk (Default) or Low Risk (Safe).')
@@ -92,7 +142,7 @@ with tab_predictor:
     st.markdown('### Applicant Input Summary')
     st.dataframe(raw_df, use_container_width=True, hide_index=True)
 
-    # Encode categorical features and combine with numeric features
+    # Feature preparation phase: apply one-hot encoding and align model input columns.
     encoded_array = encoder.transform(raw_df[cat_cols])
     encoded_cols = encoder.get_feature_names_out(cat_cols)
     encoded_df = pd.DataFrame(encoded_array, columns=encoded_cols)
@@ -102,6 +152,7 @@ with tab_predictor:
     if hasattr(model, 'feature_names_in_'):
         input_df = input_df.reindex(columns=model.feature_names_in_, fill_value=0)
 
+    # Inference phase: run prediction, compute risk level, and show confidence.
     if st.button('Predict Credit Risk', use_container_width=True):
         proba = model.predict_proba(input_df)[0]
         good_prob = proba[1]
@@ -133,7 +184,7 @@ with tab_predictor:
             st.metric('BAD probability', f"{proba[0] * 100:.2f}%")
 
 
-# Bulk Prediction Tab
+# Bulk prediction tab phase: validate uploaded CSV and score all valid rows.
 with tab_bulk:
     st.divider()
     st.markdown("## Bulk Upload Guidelines")
@@ -182,6 +233,7 @@ with tab_bulk:
     uploaded_file = st.file_uploader("Upload CSV", type=["csv"])
 
     if uploaded_file is not None:
+        # Bulk preprocessing phase: standardize columns and validate input schema.
         df = pd.read_csv(uploaded_file)
         with st.spinner("Processing bulk prediction file..."):
             # Normalize user-uploaded column names to handle case and formatting differences
@@ -276,6 +328,7 @@ with tab_bulk:
                 st.error("No valid rows left after validation")
                 st.stop()
 
+            # Bulk inference phase: encode features and generate predictions.
             encoded_array = encoder.transform(df[cat_cols])
             encoded_cols = encoder.get_feature_names_out(cat_cols)
             encoded_df = pd.DataFrame(encoded_array, columns=encoded_cols)
@@ -291,6 +344,7 @@ with tab_bulk:
             df = df.reset_index(drop=True)
             df["Prediction"] = ["GOOD" if p == 1 else "BAD" for p in preds]
 
+        # Bulk output phase: show table, summary metrics, and prediction distribution.
         st.dataframe(df, use_container_width=True, hide_index=True)
 
         st.divider()
@@ -325,12 +379,12 @@ with tab_bulk:
                     wedgeprops={"width": 0.45}
                 )
                 ax.axis('equal')
-                st.pyplot(fig, use_container_width=False)
+                st.pyplot(fig, use_container_width=True)
         
         st.divider()
 
 
-# Parameter Atlas Tab
+# Guide tab phase: explain each parameter and display model performance chart.
 with tab_guide:
     st.subheader('Parameter Meaning Guide')
     st.write('Open each item to see type and meaning.')
@@ -411,5 +465,5 @@ with tab_guide:
                     f'{height:.4f}', ha='center', va='bottom', color='#333333', fontsize=10, fontweight='heavy')
 
     plt.tight_layout()
-    st.pyplot(fig_bar)
+    st.pyplot(fig_bar, use_container_width=True)
     
